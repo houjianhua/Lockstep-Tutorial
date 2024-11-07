@@ -1,8 +1,5 @@
 ﻿using Lockstep.Game;
-using Lockstep.Math;
-using Lockstep.Game;
 using UnityEngine;
-
 
 public class MainScript : MonoBehaviour {
     public Launcher launcher = new Launcher();

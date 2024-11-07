@@ -160,7 +160,7 @@ namespace Lockstep.Network {
                 return session;
             }
             catch (Exception e) {
-                Log.Error(e.ToString());
+                LLog.Error(e.ToString());
                 return null;
             }
         }
@@ -254,7 +254,7 @@ namespace Lockstep.Network {
                     }
                 }
                 catch (Exception e) {
-                    Log.Error(e.ToString());
+                    LLog.Error(e.ToString());
                     continue;
                 }
 
@@ -262,14 +262,14 @@ namespace Lockstep.Network {
                     this.Run(packet);
                 }
                 catch (Exception e) {
-                    Log.Error(e.ToString());
+                    LLog.Error(e.ToString());
                 }
             }
         }
 
         private void Run(Packet packet){
             if (packet.Length < Packet.MinSize) {
-                Log.Error($"message error length < {Packet.MinSize}, ip: {this.RemoteAddress}");
+                LLog.Error($"message error length < {Packet.MinSize}, ip: {this.RemoteAddress}");
                 this.Network.Remove(this.Id);
                 return;
             }

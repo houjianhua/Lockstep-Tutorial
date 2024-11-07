@@ -1,48 +1,59 @@
 using System.Collections.Generic;
 using Lockstep.Math;
 
-namespace Lockstep.Game {
-    public partial class CommonStateService : ICommonStateService, ITimeMachine {
+namespace Lockstep.Game
+{
+    public partial class CommonStateService : ICommonStateService, ITimeMachine
+    {
         public int Tick { get; set; }
         public LFloat DeltaTime { get; set; }
         public LFloat TimeSinceGameStart { get; set; }
         public int Hash { get; set; }
         public bool IsPause { get; set; }
 
-        public void SetTick(int val){
+        public void SetTick(int val)
+        {
             Tick = val;
         }
 
-        public void SetDeltaTime(LFloat val){
+        public void SetDeltaTime(LFloat val)
+        {
             DeltaTime = val;
         }
 
-        public void SetTimeSinceGameStart(LFloat val){
+        public void SetTimeSinceGameStart(LFloat val)
+        {
             TimeSinceGameStart = val;
         }
 
 
         public int CurTick { get; set; }
-
+        /// <summary>
+        /// 备份没帧的hash值
+        /// </summary>
         Dictionary<int, int> _tick2State = new Dictionary<int, int>();
 
-        public void RollbackTo(int tick){
+        public void RollbackTo(int tick)
+        {
             Hash = _tick2State[tick];
         }
 
-        public void Backup(int tick){
+        public void Backup(int tick)
+        {
             _tick2State[tick] = Hash;
         }
 
-        public void Clean(int maxVerifiedTick){ }
+        public void Clean(int maxVerifiedTick) { }
 
 
     }
 
-    public partial class ConstStateService : BaseService, IConstStateService {
+    public partial class ConstStateService : BaseService, IConstStateService
+    {
         public static ConstStateService Instance { get; private set; }
 
-        public ConstStateService(){
+        public ConstStateService()
+        {
             Instance = this;
         }
 
@@ -68,7 +79,8 @@ namespace Lockstep.Game {
 
         private string _relPath = "";
 
-        public string RelPath {
+        public string RelPath
+        {
             get => _relPath;
             set => _relPath = value;
         }

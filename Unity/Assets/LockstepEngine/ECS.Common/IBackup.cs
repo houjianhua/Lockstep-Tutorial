@@ -3,6 +3,10 @@ using Lockstep.Serialization;
 
 namespace Lockstep.Game {
     public interface IBackup : IDumpStr {
+        /// <summary>
+        /// 写入备份
+        /// </summary>
+        /// <param name="writer"></param>
         void WriteBackup(Serializer writer);
         void ReadBackup(Deserializer reader);
     }

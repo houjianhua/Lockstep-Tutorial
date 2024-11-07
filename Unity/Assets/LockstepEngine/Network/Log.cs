@@ -4,7 +4,7 @@ using UnityEngine;
 #endif
 
 namespace Lockstep.Network {
-    public class Log {
+    public class LLog {
         public static void Error(string msg){
 #if UNITY_5_3_OR_NEWER
             Debug.LogError(msg);
@@ -13,7 +13,7 @@ namespace Lockstep.Network {
 #endif
         }
 
-        public static void sLog(string msg){
+        public static void Log(string msg){
 #if UNITY_5_3_OR_NEWER
             Debug.Log(msg);
 #else

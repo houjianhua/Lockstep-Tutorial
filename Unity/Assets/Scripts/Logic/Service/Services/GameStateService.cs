@@ -11,9 +11,18 @@ using Lockstep.Util;
 
 namespace Lockstep.Game {
     public partial class GameStateService : BaseGameService, IGameStateService {
+        /// <summary>
+        /// 备份游戏状态
+        /// </summary>
         private Dictionary<int,GameState> _tick2State = new Dictionary<int,GameState>();
         private GameState _curGameState;
+        /// <summary>
+        /// 类型对应战斗对象
+        /// </summary>
         private Dictionary<Type, IList> _type2Entities = new Dictionary<Type, IList>();
+        /// <summary>
+        /// id对应战斗对象
+        /// </summary>
         private Dictionary<int, BaseEntity> _id2Entities = new Dictionary<int, BaseEntity>();
         private Dictionary<int, Serializer> _tick2Backup = new Dictionary<int, Serializer>();
 

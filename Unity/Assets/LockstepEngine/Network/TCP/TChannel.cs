@@ -56,13 +56,13 @@ namespace Lockstep.Network
 			}
 			catch (SocketException e)
 			{
-				Log.Error($"connect error: {e.SocketErrorCode}");
+				LLog.Error($"connect error: {e.SocketErrorCode}");
 				this.OnError(e.SocketErrorCode);
 			}
 			catch (Exception e)
 			{
 				this.OnError(SocketError.SocketError);
-				Log.Error($"connect error: {ipEndPoint} {e}");
+				LLog.Error($"connect error: {ipEndPoint} {e}");
 			}
 		}
 
@@ -170,7 +170,7 @@ namespace Lockstep.Network
 			}
 			catch (Exception e)
 			{
-				Log.Error(e.ToString());
+				LLog.Error(e.ToString());
 				this.OnError(SocketError.SocketError);
 			}
 		}
@@ -224,7 +224,7 @@ namespace Lockstep.Network
 			}
 			catch (Exception e)
 			{
-				Log.Error(e.ToString());
+				LLog.Error(e.ToString());
 				this.OnError(SocketError.SocketError);
 			}
 		}

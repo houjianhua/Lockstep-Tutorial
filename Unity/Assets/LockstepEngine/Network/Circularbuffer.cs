@@ -46,7 +46,7 @@ namespace Lockstep.Network
                 }
                 if (c < 0)
                 {
-                    Log.Error(string.Format("TBuffer count < 0: {0}, {1}, {2}",this.bufferQueue.Count, this.LastIndex, this.FirstIndex));
+                    LLog.Error(string.Format("TBuffer count < 0: {0}, {1}, {2}",this.bufferQueue.Count, this.LastIndex, this.FirstIndex));
                 }
                 return c;
             }
