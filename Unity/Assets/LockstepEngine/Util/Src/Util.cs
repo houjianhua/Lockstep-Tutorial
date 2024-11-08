@@ -2,19 +2,25 @@ using System;
 using System.IO;
 using Lockstep.Logging;
 
-namespace Lockstep.Util {
-    public class Utils {
-        public static void StartServices(){
+namespace Lockstep.Util
+{
+    public class Utils
+    {
+        public static void StartServices()
+        {
             LTime.DoStart();
             CoroutineHelper.DoStart();
         }
 
-        public static void UpdateServices(){
+        public static void UpdateServices(float deltaTime)
+        {
             LTime.DoUpdate();
             CoroutineHelper.DoUpdate();
+            TimeUtil.DoUpdate(deltaTime);
         }
 
-        public static void ExecuteCmd(string shellName, string workingDir){
+        public static void ExecuteCmd(string shellName, string workingDir)
+        {
             System.Diagnostics.Process process = new System.Diagnostics.Process();
             process.StartInfo.CreateNoWindow = false;
             process.StartInfo.ErrorDialog = true;

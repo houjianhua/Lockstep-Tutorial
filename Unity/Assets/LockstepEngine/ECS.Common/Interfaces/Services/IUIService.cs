@@ -1,18 +1,22 @@
 using System;
 using System.Reflection;
 
-namespace Lockstep.Game {
-    public enum EWindowDepth {
+namespace Lockstep.Game
+{
+    public enum EWindowLayer
+    {
         Normal,
         Notice,
         Forward,
     }
 
-    public struct WindowCreateInfo {
+    public struct WindowCreateInfo
+    {
         public string resDir;
-        public EWindowDepth depth;
+        public EWindowLayer depth;
 
-        public WindowCreateInfo(string dir, EWindowDepth dep){
+        public WindowCreateInfo(string dir, EWindowLayer dep)
+        {
             this.resDir = dir;
             this.depth = dep;
         }
@@ -20,14 +24,11 @@ namespace Lockstep.Game {
 
     public delegate void UICallback(object windowObj);
 
-    public interface IUIService : IService {
-        bool IsDebugMode { get; }
-        T GetIService<T>() where T : IService;
+    public interface IUIService : IService
+    {
         void RegisterAssembly(Assembly uiAssembly);
-        void OpenWindow(string dir, EWindowDepth dep, UICallback callback = null);
-        void OpenWindow(WindowCreateInfo info, UICallback callback = null);
+        void OpenWindow(string dir, EWindowLayer dep, UICallback callback = null);
         void CloseWindow(string dir);
-        void CloseWindow(object window);
-        void ShowDialog(string title, string body, Action<bool> resultCallback);
+        void CloseWindow(IUI window);
     }
 }
