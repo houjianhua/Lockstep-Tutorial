@@ -9,7 +9,7 @@ namespace Lockstep.FakeServer {
         public string Account;
         public string LoginHash;
         public byte LocalId;
-        public Session PeerTcp;
+        public Session PeerTcp;//实例 TCP UDP Session使用的同一个 没有区分 都是 TCP
         public Session PeerUdp;
         public Game Game;
         public GameData GameData;

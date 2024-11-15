@@ -197,6 +197,9 @@ namespace Lockstep.Network {
         private readonly List<byte[]> byteses = new List<byte[]>() {new byte[1], new byte[0], new byte[0]};
 
         public NetworkProxy Network;
+        /// <summary>
+        /// Player
+        /// </summary>
         public object BindInfo;
 
         public T GetBindInfo<T>() where T : class{

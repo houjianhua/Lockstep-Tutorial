@@ -121,20 +121,31 @@ namespace Lockstep.Game
         private ServerFrame[] _serverBuffer;
         private ServerFrame[] _clientBuffer;
 
-        //ping 
+        /// <summary>
+        /// ping延迟平均值
+        /// </summary>
         public int PingVal { get; private set; }
+        /// <summary>
+        /// 没帧收到的ping数据
+        /// </summary>
         private List<long> _pings = new List<long>();
+        /// <summary>
+        /// 客户端运行时长 - 服务器游戏开始时间(收到所有玩家第0帧帧数据) - ping/2
+        /// </summary>
         private long _guessServerStartTimestamp = Int64.MaxValue;
+        /// <summary>
+        /// 历史ping最小值
+        /// </summary>
         private long _historyMinPing = Int64.MaxValue;
         private long _minPing = Int64.MaxValue;
         private long _maxPing = Int64.MinValue;
         /// <summary>
-        /// 延迟平均值
+        /// 帧数据延迟平均值
         /// </summary>
         public int DelayVal { get; private set; }
         private float _pingTimer;
         /// <summary>
-        /// 帧延迟 收到帧 - 发送帧 时间
+        /// 帧数据延迟时间 （收到帧 - 发送帧） 
         /// </summary>
         private List<long> _delays = new List<long>();
         /// <summary>
@@ -201,7 +212,10 @@ namespace Lockstep.Game
             _clientBuffer[sIdx] = frame;
         }
 
-
+        /// <summary>
+        /// 服务器下发Ping数据
+        /// </summary>
+        /// <param name="msg"></param>
         public void OnPlayerPing(Msg_G2C_PlayerPing msg)
         {
             //PushServerFrames(frames, isNeedDebugCheck);
@@ -291,7 +305,7 @@ namespace Lockstep.Game
         /// <param name="deltaTime"></param>
         public void DoUpdate(float deltaTime)
         {
-            _networkService.SendPing(_simulatorService.LocalActorId, LTime.realtimeSinceStartupMS);
+            _networkService.SendPing(_simulatorService.LocalActorId, LTime.realtimeSinceStartupMS);//？没帧都在发ping 是不是太密集了
             _predictHelper.DoUpdate(deltaTime);
             int worldTick = _simulatorService.World.Tick;
             UpdatePingVal(deltaTime);
@@ -360,6 +374,7 @@ namespace Lockstep.Game
                     Debug.LogWarning(
                         $"Recalc _gameStartTimestampMs {_simulatorService._gameStartTimestampMs} _guessServerStartTimestamp:{_guessServerStartTimestamp}");
 #endif
+                    //修正游戏开始时间
                     _simulatorService._gameStartTimestampMs = LMath.Min(_guessServerStartTimestamp,
                         _simulatorService._gameStartTimestampMs);
                 }

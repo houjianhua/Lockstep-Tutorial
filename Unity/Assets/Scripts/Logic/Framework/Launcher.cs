@@ -148,7 +148,6 @@ namespace Lockstep.Game
                 EventHelper.Trigger(EEvent.OnGameCreate, GameStartInfo);
                 EventHelper.Trigger(EEvent.LevelLoadDone, GameStartInfo);
             }
-            _serviceContainer.GetService<IUIService>().OpenWindow(MainUI.Path, EWindowLayer.Normal);
         }
 
         public void DoUpdate(float fDeltaTime)

@@ -158,7 +158,7 @@ namespace Lockstep.Game {
         public void ConnectToGameServer(Msg_C2G_Hello helloBody, IPEndInfo _gameTcpEnd, bool isReconnect){
             IsReconnecting = isReconnect;
             ResetStatus();
-            this.helloBody = helloBody.Hello;
+            this.helloBody = helloBody.Hello;//？？
             ConnectUdp();
             //TODO temp code
             SendTcp(EMsgSC.C2L_JoinRoom,new Msg_C2L_JoinRoom() {

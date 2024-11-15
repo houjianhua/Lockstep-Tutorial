@@ -13,6 +13,10 @@ namespace Lockstep.Network
 	{
 		public abstract AChannel GetChannel(long id);
 
+		/// <summary>
+		/// 每个客户的链接进来都会创建一个Channel
+		/// </summary>
+		/// <returns></returns>
 		public abstract Task<AChannel> AcceptChannel();
 
 		public abstract AChannel ConnectChannel(IPEndPoint ipEndPoint);

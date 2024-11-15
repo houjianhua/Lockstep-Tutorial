@@ -47,7 +47,10 @@ namespace Lockstep.Game
         /// frame count that need predict(TODO should change according current network's delay)
         public int FramePredictCount = 0; //~~~
 
-        /// game init timestamp 游戏开始的时间
+        /// <summary>
+        /// 游戏开始的时间 收到服务器第0帧数据时刻 此字段比服务器字段晚一点 服务器收到所有玩家上传的数据后 设置此字段 下发后 客户端才设置此字段
+        /// FrameBuffer中处理Ping的时候修正了
+        /// </summary>
         public long _gameStartTimestampMs = -1;
         /// <summary>
         /// 游戏开始到现在应该是多少帧
@@ -61,6 +64,9 @@ namespace Lockstep.Game
         /// 已经给服务器发送帧数据帧数
         /// </summary>
         public int inputTick = 0;
+        /// <summary>
+        /// 需要发给服务器的帧数据 超前1帧
+        /// </summary>
         public int inputTargetTick => _tickSinceGameStart + PreSendInputCount;
 
 
@@ -80,6 +86,9 @@ namespace Lockstep.Game
         /// 快照间隔
         /// </summary>
         public int snapshotFrameInterval = 1;
+        /// <summary>
+        /// 收到服务器第0帧数据后设置为true
+        /// </summary>
         private bool _hasRecvInputMsg;
 
         public SimulatorService()
@@ -281,7 +290,7 @@ namespace Lockstep.Game
             }
             else
             {
-                //？？？？
+                //客户端超前发送超前帧的数据给服务器
                 while (inputTick <= inputTargetTick)
                 {
                     SendInputs(inputTick++);
@@ -449,7 +458,7 @@ namespace Lockstep.Game
             //    var playerInput = new Deserializer(input.Commands[0].content).Parse<Lockstep.Game.PlayerInput>();
             //    Debug.Log($"SendInput curTick{curTick} maxSvrTick{_cmdBuffer.MaxServerTickInBuffer} _tickSinceGameStart {_tickSinceGameStart} uv {playerInput.inputUV}");
             //}
-            if (curTick > _cmdBuffer.MaxServerTickInBuffer)
+            if (curTick > _cmdBuffer.MaxServerTickInBuffer)//模拟初始的时候 0 > -1 发出第0帧数据 激活服务器开始模拟
             {
                 //TODO combine all history inputs into one Msg 
                 //Debug.Log("SendInput " + curTick +" _tickSinceGameStart " + _tickSinceGameStart);
@@ -620,7 +629,10 @@ namespace Lockstep.Game
             EventHelper.Trigger(EEvent.SimulationInit, null);
         }
 
-
+        /// <summary>
+        /// 所有玩家游戏场景加载完成
+        /// </summary>
+        /// <param name="param"></param>
         void OnEvent_OnAllPlayerFinishedLoad(object param)
         {
             Debug.Log($"OnEvent_OnAllPlayerFinishedLoad");

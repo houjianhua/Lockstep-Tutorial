@@ -81,12 +81,17 @@ namespace Lockstep.FakeServer {
 
         private delegate BaseMsg ParseNetMsg(Deserializer reader);
 
-
+        /// <summary>
+        /// 2人一局游戏
+        /// </summary>
         public const int MaxPlayerCount = 2;
 
         public int MapId { get; set; }
         public string GameHash { get; set; }
 
+        /// <summary>
+        /// ？没地方负值
+        /// </summary>
         public IPEndInfo TcpEnd { get; set; }
         public IPEndInfo UdpEnd { get; set; }
 
@@ -112,6 +117,9 @@ namespace Lockstep.FakeServer {
 
         public bool IsRunning { get; private set; }
         public string Name;
+        /// <summary>
+        /// 游戏创建时间
+        /// </summary>
         public float TimeSinceCreate;
         public bool IsFinished = false;
 
@@ -122,7 +130,10 @@ namespace Lockstep.FakeServer {
         public Player[] Players { get; private set; }
 
 
-        //hashcode 
+        //hashcode
+        /// <summary>
+        /// 当前将要执行到帧
+        /// </summary>
         public int Tick = 0;
         private Dictionary<int, HashCodeMatcher> _hashCodes = new Dictionary<int, HashCodeMatcher>();
 
@@ -131,28 +142,35 @@ namespace Lockstep.FakeServer {
         private DealNetMsg[] allMsgDealFuncs = new DealNetMsg[MaxMsgIdx];
         private ParseNetMsg[] allMsgParsers = new ParseNetMsg[MaxMsgIdx];
 
-
+        /// <summary>
+        /// 游戏从创建到现在时长
+        /// </summary>
         private float _timeSinceLoaded;
+        /// <summary>
+        /// 第0帧数据是在游戏创建后多久发出去到
+        /// </summary>
         private float _firstFrameTimeStamp = 0;
         private float _waitTimer = 0;
 
-        //所有需要等待输入到来的Ids
+        /// <summary>
+        /// 这个字段 只在往里面加入数据 并没有使用
+        /// </summary>
         private List<byte> _allNeedWaitInputPlayerIds;
         private List<ServerFrame> _allHistoryFrames = new List<ServerFrame>(); //所有的历史帧
 
+        /// <summary>
+        /// 玩家游戏场景加载进度
+        /// </summary>
         private byte[] _playerLoadingProgress;
         public const int MaxRepMissFrameCountPerPack = 600;
 
         public int Seed { get; set; }
 
-        public void OnRecvPlayerGameData(Player player){
-            if (player == null || MaxPlayerCount <= player.LocalId || Players[player.LocalId] != player) {
-                return;
-            }
+        public void OnRecvPlayerGameData(){
 
             bool hasRecvAll = true;
             foreach (var user in Players) {
-                if (user != null && user.GameData == null) {
+                if (user != null && user.GameData == null) {//？这种情况什么时候会出现
                     hasRecvAll = false;
                     break;
                 }
@@ -160,12 +178,11 @@ namespace Lockstep.FakeServer {
 
             var playerCount = MaxPlayerCount;
             if (hasRecvAll) {
-                //TODO 
                 for (int i = 0; i < playerCount; i++) {
                     var helloMsg = new Msg_G2C_Hello() {
                         LocalId = (byte) i
                     };
-                    Players[i].SendTcp(EMsgSC.G2C_Hello, helloMsg);
+                    Players[i].SendTcp(EMsgSC.G2C_Hello, helloMsg);//游戏服创建好后 给每个角色发送消息
                 }
 
                 var userInfos = new GameData[playerCount];
@@ -181,7 +198,7 @@ namespace Lockstep.FakeServer {
                     UserCount = MaxPlayerCount,
                     TcpEnd = TcpEnd,
                     UdpEnd = UdpEnd,
-                    SimulationSpeed = 30,
+                    SimulationSpeed = 30,//客户端自行定义的30ms执行一帧 没有使用这个时间 修改无作用
                     UserInfos = userInfos
                 });
             }
@@ -198,7 +215,7 @@ namespace Lockstep.FakeServer {
 
 
         #region  life cycle
-
+        //创建游戏
         public void DoStart(int gameId, int gameType, int mapId, Player[] playerInfos, string gameHash){
             State = EGameState.Loading;
             Seed = LRandom.Range(1, 100000);
@@ -221,12 +238,11 @@ namespace Lockstep.FakeServer {
                 _userId2LocalId.Add(player.UserId, player.LocalId);
             }
 
-            //Temp code 
             for (byte i = 0; i < count; i++) {
                 var player = Players[i];
                 player.GameData = new GameData();
-                OnRecvPlayerGameData(player);
             }
+            OnRecvPlayerGameData();
         }
 
         public void DoUpdate(float deltaTime){
@@ -259,7 +275,7 @@ namespace Lockstep.FakeServer {
             var frame = GetOrCreateFrame(Tick);
             var inputs = frame.Inputs;
             if (!isForce) {
-                //是否所有的输入  都已经等到
+                //非强制时 需要等到所有的输入数据 才转发给客户端
                 for (int i = 0; i < inputs.Length; i++) {
                     if (inputs[i] == null) {
                         return false;
@@ -282,8 +298,8 @@ namespace Lockstep.FakeServer {
                 frames[count - i - 1] = _allHistoryFrames[Tick - i];
             }
 
-            msg.startTick = frames[0].tick;
-            msg.frames = frames;
+            msg.startTick = frames[0].tick;//起始帧
+            msg.frames = frames;//最多发3帧数据
             BorderUdp(EMsgSC.G2C_FrameData, msg);
             if (_firstFrameTimeStamp <= 0) {
                 _firstFrameTimeStamp = _timeSinceLoaded;
@@ -336,7 +352,11 @@ namespace Lockstep.FakeServer {
             GameStartInfo = info;
             BorderTcp(EMsgSC.G2C_GameStartInfo, GameStartInfo);
         }
-
+        /// <summary>
+        /// 处理玩家消息
+        /// </summary>
+        /// <param name="player">玩家</param>
+        /// <param name="reader">消息</param>
         public void OnRecvMsg(Player player, Deserializer reader){
             if (reader.IsEnd) {
                 DealMsgHandlerError(player, $"{player.UserId} send a Error:Net Msg");
@@ -414,14 +434,22 @@ namespace Lockstep.FakeServer {
 
             return data;
         }
-
+        /// <summary>
+        /// 广播TCP消息
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="data"></param>
         public void BorderTcp(EMsgSC type, BaseMsg data){
             var bytes = data.ToBytes();
             foreach (var player in Players) {
                 player?.SendTcp(type, bytes);
             }
         }
-
+        /// <summary>
+        /// 广播UDP消息
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="data"></param>
         public void BorderUdp(EMsgSC type, byte[] data){
             foreach (var player in Players) {
                 SendUdp(player, type, data);
@@ -575,10 +603,18 @@ namespace Lockstep.FakeServer {
                     break;
             }
         }
-
+        /// <summary>
+        /// 游戏开始的时间 收到所有玩家第0帧数据的时间 默认为-1 必须等到所有玩家都有帧数据上传后才给他赋值 在OnUpdate中才会主动给玩家发帧数据 如果有一个角色没发第0帧就不会发
+        /// </summary>
         public long _gameStartTimestampMs = -1;
+        /// <summary>
+        /// 服务器延迟帧 将服务器整个往后延迟一点 可以有更长时间接收到消息
+        /// </summary>
         public int _ServerTickDealy = 0;
 
+        /// <summary>
+        /// 游戏开始 到现在应该是多少帧了
+        /// </summary>
         public int _tickSinceGameStart =>
             (int) ((LTime.realtimeSinceStartupMS - _gameStartTimestampMs) / NetworkDefine.UPDATE_DELTATIME);
 
@@ -611,7 +647,7 @@ namespace Lockstep.FakeServer {
 #endif
 
             //Debug.Log($"RecvInput actorID:{input.ActorId} inputTick:{input.Tick} Tick{Tick}");
-            if (input.Tick < Tick) {
+            if (input.Tick < Tick) { //客户端的帧输入数据来晚来 已经发出去来
                 return;
             }
 
@@ -720,7 +756,11 @@ namespace Lockstep.FakeServer {
             Log($"C2G_RepMissFrameAck missFrameTick:{msg.MissFrameTick}");
         }
 
-
+        /// <summary>
+        /// 角色游戏场景加载进度
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="data"></param>
         void C2G_LoadingProgress(Player player, BaseMsg data){
             if (State != EGameState.Loading) return;
             var msg = data as Msg_C2G_LoadingProgress;

@@ -17,6 +17,9 @@ namespace Lockstep.Game {
         public PlayerInput[] PlayerInputs => _gameStateService.GetPlayers().Select(a => a.input).ToArray();
         public static Player MyPlayer;
         public static object MyPlayerTrans => MyPlayer?.engineTransform;
+        /// <summary>
+        /// 战斗需要的几个系统 怪物系统 角色系统 物理系统等
+        /// </summary>
         private List<BaseSystem> _systems = new List<BaseSystem>();
         private bool _hasStart = false;
 
