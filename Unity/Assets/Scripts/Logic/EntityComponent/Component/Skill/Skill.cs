@@ -14,29 +14,34 @@ using UnityEngine;
 using Debug = Lockstep.Logging.Debug;
 
 
-public enum ESkillState {
+public enum ESkillState
+{
     Idle,
     Firing,
 }
 
-namespace Lockstep.Game {
-    public interface ISkillEventHandler {
+namespace Lockstep.Game
+{
+    public interface ISkillEventHandler
+    {
         void OnSkillStart(Skill skill);
         void OnSkillDone(Skill skill);
         void OnSkillPartStart(Skill skill);
     }
 
     [Serializable]
-    public partial class Skill : INeedBackup {
+    public partial class Skill : INeedBackup
+    {
         private static readonly HashSet<Entity> _tempEntities = new HashSet<Entity>();
 
         [ReRefBackup] public ISkillEventHandler eventHandler;
         [ReRefBackup] public Entity entity { get; private set; }
         [ReRefBackup] public SkillInfo SkillInfo;
-
+        //冷却倒计时
         public LFloat CdTimer;
         public ESkillState State;
         public LFloat skillTimer;
+        //每个part执行了多少次
         public int[] partCounter = new int[0];
         [Backup] private int _curPartIdx;
 
@@ -44,41 +49,47 @@ namespace Lockstep.Game {
 #if DEBUG_SKILL
         private float _showTimer;
 #endif
-
+        //冷却配置
         public LFloat CD => SkillInfo.CD;
         public LFloat DoneDelay => SkillInfo.doneDelay;
         public List<SkillPart> Parts => SkillInfo.parts;
         public int TargetLayer => SkillInfo.targetLayer;
+        //技能结束时间配置
         public LFloat MaxPartTime => SkillInfo.maxPartTime;
         public string AnimName => SkillInfo.animName;
 
-        public void ForceStop(){ }
+        public void ForceStop() { }
 
-        public void BindEntity(Entity entity, SkillInfo info, ISkillEventHandler eventHandler){
+        public void BindEntity(Entity entity, SkillInfo info, ISkillEventHandler eventHandler)
+        {
             this.entity = entity;
             this.SkillInfo = info;
             this.eventHandler = eventHandler;
         }
 
-        public void DoStart(){
-            skillTimer = MaxPartTime;
+        public void DoStart()
+        {
+            skillTimer = MaxPartTime;//防止进入DoUpdate循环
             State = ESkillState.Idle;
             _curPartIdx = -1;
             partCounter = new int[Parts.Count];
         }
 
 
-        public bool Fire(){
-            if (CdTimer <= 0 && State == ESkillState.Idle) {
+        public bool Fire()
+        {
+            if (CdTimer <= 0 && State == ESkillState.Idle)
+            {
                 CdTimer = CD;
                 skillTimer = LFloat.zero;
-                for (int i = 0; i < partCounter.Length; i++) {
+                for (int i = 0; i < partCounter.Length; i++)
+                {
                     partCounter[i] = 0;
                 }
 
                 State = ESkillState.Firing;
                 entity.animator?.Play(AnimName);
-                ((Player) entity).mover.needMove = false;
+                ((Player)entity).mover.needMove = false;
                 OnFire();
                 return true;
             }
@@ -86,50 +97,61 @@ namespace Lockstep.Game {
             return false;
         }
 
-        public void OnFire(){
+        public void OnFire()
+        {
             eventHandler.OnSkillStart(this);
         }
 
-        public void Done(){
+        public void Done()
+        {
             eventHandler.OnSkillDone(this);
             State = ESkillState.Idle;
             entity.animator?.Play(AnimDefine.Idle);
         }
 
-        public void DoUpdate(LFloat deltaTime){
+        public void DoUpdate(LFloat deltaTime)
+        {
             CdTimer -= deltaTime;
             skillTimer += deltaTime;
-            if (skillTimer < MaxPartTime) {
-                for (int i = 0; i < Parts.Count; i++) {
+            if (skillTimer < MaxPartTime)
+            {
+                for (int i = 0; i < Parts.Count; i++)
+                {
                     var part = Parts[i];
                     CheckSkillPart(part, i);
                 }
 
                 foreach (var part in Parts) { }
-
-                if (CurPart != null && CurPart.moveSpd != 0) {
+                //CurPart需要在执行到伤害检测时才会更改 移动也会在这时刻才会切换到当前part
+                if (CurPart != null && CurPart.moveSpd != 0)
+                {
                     entity.transform.pos += CurPart.moveSpd * deltaTime * entity.transform.forward;
                 }
             }
-            else {
+            else
+            {
                 _curPartIdx = -1;
-                if (State == ESkillState.Firing) {
+                if (State == ESkillState.Firing)
+                {
                     Done();
                 }
             }
         }
 
-        void CheckSkillPart(SkillPart part, int idx){
-            if (partCounter[idx] > part.otherCount) return;
-            if (skillTimer > part.NextTriggerTimer(partCounter[idx])) {
+        void CheckSkillPart(SkillPart part, int idx)
+        {
+            if (partCounter[idx] > part.otherCount) return;//执行次数已经超过了总次数
+            if (skillTimer > part.NextTriggerTimer(partCounter[idx]))
+            {
                 TriggerPart(part, idx);
                 partCounter[idx]++;
             }
         }
 
-        void TriggerPart(SkillPart part, int idx){
+        void TriggerPart(SkillPart part, int idx)
+        {
             eventHandler.OnSkillPartStart(this);
-            _curPartIdx = idx;
+            _curPartIdx = idx;///?配置可能导致 多个part同时触发part
 #if DEBUG_SKILL
             _showTimer = Time.realtimeSinceStartup + 0.1f;
 #endif
@@ -150,36 +172,44 @@ namespace Lockstep.Game {
 
 #else
             //TODO Ignore CollisionSystem
-            if (col.radius > 0) {
+            if (col.radius > 0)
+            {
                 var colPos = entity.transform.TransformPoint(col.pos);
-                foreach (var e in entity.GameStateService.GetEnemies()) {
+                foreach (var e in entity.GameStateService.GetEnemies())
+                {
                     var targetCenter = e.transform.pos;
-                    if ((targetCenter - colPos).sqrMagnitude < col.radius * col.radius) {
+                    if ((targetCenter - colPos).sqrMagnitude < col.radius * col.radius)
+                    {
                         _tempEntities.Add(e);
                     }
                 }
             }
 #endif
-            foreach (var other in _tempEntities) {
+            foreach (var other in _tempEntities)
+            {
                 other.TakeDamage(entity, CurPart.damage, other.transform.pos.ToLVector3());
             }
 
             //add force
-            if (part.needForce) {
+            if (part.needForce)
+            {
                 var force = part.impulseForce;
                 var forward = entity.transform.forward;
                 var right = forward.RightVec();
                 var z = forward * force.z + right * force.x;
                 force.x = z.x;
                 force.z = z.y;
-                foreach (var other in _tempEntities) {
-                    other.rigidbody.AddImpulse(force);
+                foreach (var other in _tempEntities)
+                {
+                    other.rigidbody.AddImpulse(force);//每次伤害添加一次冲力
                 }
             }
 
-            if (part.isResetForce) {
-                foreach (var other in _tempEntities) {
-                    other.rigidbody.ResetSpeed(new LFloat(3));
+            if (part.isResetForce)
+            {
+                foreach (var other in _tempEntities)
+                {
+                    other.rigidbody.ResetSpeed(new LFloat(3));//?重置速度为3
                 }
             }
 
@@ -188,35 +218,45 @@ namespace Lockstep.Game {
 
 
         //private static readonly HashSet<Entity> _tempEntities = new HashSet<Entity>();
-        private void _OnTriggerEnter(ColliderProxy other){
-            if (CurPart.collider.IsCircle && CurPart.collider.deg > 0) {
+        private void _OnTriggerEnter(ColliderProxy other)
+        {
+            if (CurPart.collider.IsCircle && CurPart.collider.deg > 0)
+            {
                 var deg = (other.Transform2D.pos - entity.transform.pos).ToDeg();
                 var degDiff = entity.transform.deg.Abs() - deg;
-                if (LMath.Abs(degDiff) <= CurPart.collider.deg) {
+                if (LMath.Abs(degDiff) <= CurPart.collider.deg)
+                {
                     _tempEntities.Add(other.Entity);
                 }
             }
-            else {
+            else
+            {
                 _tempEntities.Add(other.Entity);
             }
         }
 
-        public void OnDrawGizmos(){
+        public void OnDrawGizmos()
+        {
 #if UNITY_EDITOR && DEBUG_SKILL
             float tintVal = 0.3f;
             Gizmos.color = new Color(0, 1.0f - tintVal, tintVal, 0.25f);
-            if (Application.isPlaying) {
+            if (Application.isPlaying)
+            {
                 if (entity == null) return;
                 if (CurPart == null) return;
-                if (_showTimer < Time.realtimeSinceStartup) {
+                if (_showTimer < Time.realtimeSinceStartup)
+                {
                     return;
                 }
 
                 ShowPartGizmons(CurPart);
             }
-            else {
-                foreach (var part in Parts) {
-                    if (part._DebugShow) {
+            else
+            {
+                foreach (var part in Parts)
+                {
+                    if (part._DebugShow)
+                    {
                         ShowPartGizmons(part);
                     }
                 }
@@ -226,15 +266,18 @@ namespace Lockstep.Game {
 #endif
         }
 
-        private void ShowPartGizmons(SkillPart part){
+        private void ShowPartGizmons(SkillPart part)
+        {
 #if UNITY_EDITOR
             var col = part.collider;
-            if (col.radius > 0) {
+            if (col.radius > 0)
+            {
                 //circle
                 var pos = entity?.transform.TransformPoint(col.pos) ?? col.pos;
                 Gizmos.DrawSphere(pos.ToVector3XZ(LFloat.one), col.radius.ToFloat());
             }
-            else {
+            else
+            {
                 //aabb
                 var pos = entity?.transform.TransformPoint(col.pos) ?? col.pos;
                 Gizmos.DrawCube(pos.ToVector3XZ(LFloat.one), col.size.ToVector3XZ(LFloat.one));

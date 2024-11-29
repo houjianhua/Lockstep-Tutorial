@@ -18,16 +18,21 @@ namespace Lockstep.Game {
     [Serializable]
     public class SkillPart {
         public bool _DebugShow;
+        //自己的移动速度 执行当前part时 角色会沿此方向移动
         public LFloat moveSpd;
-        public LFloat startFrame;
+        public LFloat startFrame;//配的数值是 1.20
         public LFloat startTimer => startFrame * SkillPart.AnimFrameScale;
         public SkillColliderInfo collider;
+        //对被击者添加冲力
         public LVector3 impulseForce;
+        //对被击者添加冲力
         public bool needForce;
         public bool isResetForce;
 
         public LFloat interval;
+        //检测几次伤害
         public int otherCount;
+        //每次产生的伤害
         public int damage;
         public static LFloat AnimFrameScale = new LFloat(true, 1667);
         [HideInInspector] public LFloat DeadTimer => startTimer + interval * (otherCount + LFloat.half);
